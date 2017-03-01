@@ -51,7 +51,6 @@ def wlhome():
         lang = "TBC"
         txt = form.txtdata.data
         form.txtdata.data = ''
-        classification = {}
 
         try:
             ltu = LanguageTranslationUtils(app)
