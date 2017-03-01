@@ -21,7 +21,7 @@ from flask.ext.wtf import Form
 from wtforms import TextAreaField, SubmitField
 from wtforms.validators import Required
 
-from watson_developer_cloud import LanguageTranslationV2 as LanguageTranslation
+from watson_developer_cloud import LanguageTranslatorV2 as LanguageTranslation
 from watson_developer_cloud import WatsonException
 
 
@@ -141,35 +141,39 @@ def wlhome():
     # This is how you do logging, in this case information messages.
     app.logger.info('wlhome page requested')
     allinfo = {}
-    lang = "TBD"
-    txt = None
+    outputTxt = "TBD"
+    targetlang = 'en'
     form = LangForm()
     # If the form passes this check, then its a POST and
     # the fields are valid. ie. if the
     # request is a GET then this check fails.
     if form.validate_on_submit():
+        data = form.txtdata.data
+        app.logger.info('Text to bne processed is {}'.format(data))
         lang = "TBC"
-        txt = form.txtdata.data
-        form.txtdata.data = ''
-
         try:
-            language_translation = \
-                LanguageTranslation(username=username,
-                                    password=password)
-            langsdetected = language_translation.identify(txt)
-            primarylang = langsdetected["languages"][0]['language']
-            confidence = langsdetected["languages"][0]['confidence']
-
-            lang = "I am {} confident that the language is {}"
-            lang = lang.format(confidence, primarylang)
-            session['langtext'] = lang
-
-            allinfo['lang'] = lang
+            lang = identifyLanguage(data)
+            primarylang = lang['language']
+            confidence = lang['confidence']
+            outputTxt = "I am {} confident that the language is {}"
+            outputTxt = outputTxt.format(confidence, primarylang)
+            if targetlang != primarylang:
+                app.logger.info("Language {} is not {}".format(primarylang,
+                                                               targetlang))
+                supportedModels = checkForTranslation(primarylang, targetlang)
+                if supportedModels:
+                    message = "We have some supported translation models"
+                    app.logger.info(message)
+                    englishTxt = \
+                        performTranslation(data, primarylang, targetlang)
+                    outputTxt += ", which in english is {}".format(englishTxt)
+                else:
+                    outputTxt += ", which unfortunately, we can't translate"
+            allinfo['lang'] = outputTxt
             allinfo['form'] = form
-            return redirect(url_for('wlhome'))
+            return render_template('watson/wlindex.html', info=allinfo)
         except WatsonException as err:
             allinfo['error'] = err
-
     allinfo['lang'] = session.get('langtext')
     allinfo['form'] = form
     return render_template('watson/wlindex.html', info=allinfo)
