@@ -22,39 +22,38 @@ from .baseservice import BaseService
 
 
 class AlchemyLanguageUtils(BaseService):
-  def __init__(self, app):
-    self.app = app
-    super(AlchemyLanguageUtils, self).__init__("alchemy_api")
-    self.service = AlchemyLanguageService(api_key=self.getAPIKey()) 
+    def __init__(self, app):
+        self.app = app
+        super(AlchemyLanguageUtils, self).__init__("alchemy_api")
+        self.service = AlchemyLanguageService(api_key=self.getAPIKey())
 
-  def getAlchemyService(self):
-    return self.service  
+    def getAlchemyService(self):
+        return self.service
 
-  def identifyKeyworkdsAndEntities(self, data):
-    self.app.logger.info('Preparing to invoke AlchemyAPI Language service')
-    txt = data.encode("utf-8", "replace")
-    alchemy_language = self.getAlchemyService()
+    def identifyKeyworkdsAndEntities(self, data):
+        self.app.logger.info('Preparing to invoke AlchemyAPI Language service')
+        txt = data.encode("utf-8", "replace")
+        alchemy_language = self.getAlchemyService()
 
-    alchemyResults = alchemy_language.combined(text=txt, show_source_text=True,
-                                   extract=['entity', 'keyword'])
-    self.app.logger.info(json.dumps(alchemyResults, indent=2))
+        alchemyResults = alchemy_language.combined(text=txt,
+                                                   show_source_text=True,
+                                                   extract=['entity',
+                                                            'keyword'])
+        self.app.logger.info(json.dumps(alchemyResults, indent=2))
 
-    primeEntity = None
-    primeKeyword = None
- 
-    if 'entities' in alchemyResults:
-      entities = alchemyResults['entities']
-      if 0 < len(entities): 
-        primeEntity = entities[0].get('text', None)  
+        primeEntity = None
+        primeKeyword = None
 
-    if 'keywords' in alchemyResults:
-      keywords = alchemyResults['keywords']
-      if 0 < len(keywords): 
-        primeKeyword = keywords[0].get('text', None)  
+        if 'entities' in alchemyResults:
+            entities = alchemyResults['entities']
+            if 0 < len(entities):
+                primeEntity = entities[0].get('text', None)
 
+        if 'keywords' in alchemyResults:
+            keywords = alchemyResults['keywords']
+            if 0 < len(keywords):
+                primeKeyword = keywords[0].get('text', None)
 
-    retData = { "prime_entity" : primeEntity,
-                "prime_keyword" : primeKeyword }
-    return retData
-
-
+        retData = {"prime_entity": primeEntity,
+                   "prime_keyword": primeKeyword}
+        return retData
