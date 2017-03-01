@@ -33,15 +33,6 @@ app.config['SECRET_KEY'] = \
     'please subtitute this string with something hard to guess'
 
 
-global username
-global password
-with open('credentials.json') as f:
-    data = json.load(f)
-    credentials = data['language_translator'][0]['credentials']
-    username = str(credentials['username'])
-    password = str(credentials['password'])
-
-
 class LangForm(Form):
     txtdata = TextAreaField('Text to process', validators=[Required()])
     submit = SubmitField('Process')
