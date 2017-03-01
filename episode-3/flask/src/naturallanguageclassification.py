@@ -29,8 +29,8 @@ class NaturalLanguageClassifierUtils(object):
     def __init__(self, app):
         super(NaturalLanguageClassifierUtils, self).__init__()
         self.app = app
-        self.service = NaturalLanguageClassifier(username=username,
-                                                 password=username)
+        self.service = \
+            NaturalLanguageClassifier(username=username, password=password)
 
     def getNLCService(self):
         '''
