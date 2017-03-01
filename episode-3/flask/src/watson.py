@@ -21,7 +21,7 @@ from flask.ext.wtf import Form
 from wtforms import TextAreaField, SubmitField
 from wtforms.validators import Required
 
-from watson_developer_cloud import LanguageTranslationV2 as LanguageTranslation
+from watson_developer_cloud import LanguageTranslatorV2 as LanguageTranslation
 from watson_developer_cloud import WatsonException
 
 from languagetranslation import LanguageTranslationUtils
@@ -30,7 +30,16 @@ from naturallanguageclassification import NaturalLanguageClassifierUtils
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = \
-    'please subtittute this string with something hard to guess'
+    'please subtitute this string with something hard to guess'
+
+
+global username
+global password
+with open('credentials.json') as f:
+    data = json.load(f)
+    credentials = data['language_translator'][0]['credentials']
+    username = str(credentials['username'])
+    password = str(credentials['password'])
 
 
 class LangForm(Form):
