@@ -26,7 +26,8 @@ from watson_developer_cloud import WatsonException
 # submission.
 # You should change the secret key to something that is secret and complex.
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'please subtitute this string with something hard to guess'
+app.config['SECRET_KEY'] = \
+    'please subtitute this string with something hard to guess'
 
 
 # The form containing the text to be processed that the application web page
@@ -54,12 +55,15 @@ def wlhome():
         form.txtdata.data = ''
 
         try:
-            language_translation = LanguageTranslation(username='<your username key for the Watson language translation service>',
-                                                       password='<your password key for the service>')
+            language_translation = \
+                LanguageTranslation(username='<username>',
+                                    password='<password>')
             langsdetected = language_translation.identify(txt)
             primarylang = langsdetected["languages"][0]
 
-            lang = "I am {confidence} confident that the language is {language}.".format(**primarylang)
+            lang = \
+                "I am {confidence} confident that the language is {language}."
+            lang = lang.format(**primarylang)
             session['langtext'] = lang
 
             allinfo['lang'] = lang
