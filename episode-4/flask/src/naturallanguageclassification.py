@@ -19,34 +19,51 @@ from watson_developer_cloud import WatsonException
 from watson_developer_cloud import NaturalLanguageClassifierV1 as NaturalLanguageClassifier
 
 
+with open('class_credentials.json') as f:
+    data = json.load(f)
+    username = str(data['username'])
+    password = str(data['password'])
+
+
 class NaturalLanguageClassifierUtils(object):
-  def __init__(self, app):
-    super(NaturalLanguageClassifierUtils, self).__init__()
-    self.app = app
-    self.service = NaturalLanguageClassifier(username='<your username key for the Watson NLC service>',
-                                             password='<your password key for the service>')
+    def __init__(self, app):
+        super(NaturalLanguageClassifierUtils, self).__init__()
+        self.app = app
+        self.service = \
+            NaturalLanguageClassifier(username=username, password=password)
 
-  def getNLCService(self):
-    return self.service      
+    def getNLCService(self):
+        '''
+        Args:
+            None
+        Returns:
+            NaturalLanguageClassifierUtils as a class
+        '''
+        return self.service
 
-  def classifyTheText(self, txt):
-    self.app.logger.info("About to run the classification")
-    nlc = self.getNLCService()
-    classification = {}
+    def classifyTheText(self, txt):
+        '''
+        Args:
+            txt (str): this is the string that is going to be classified
+        Returns:
+            classification (dict): this is a dict representing the classifier
+            output
+        '''
+        self.app.logger.info("About to run the classification")
+        nlc = self.getNLCService()
+        classification = {}
 
-    classificationList = nlc.list()
-    if "classifiers" in classificationList:
-      if "classifier_id" in classificationList["classifiers"][0]:
-         classID = classificationList["classifiers"][0]['classifier_id']
-         status = nlc.status(classID)   
-         if "status" in status and "Available" == status["status"]:
-           classes = nlc.classify(classID, txt)
-           if "classes" in classes:
-             className = classes["classes"][0]["class_name"]
-             confidence = classes["classes"][0]["confidence"]
-             classification = {"confidence": confidence,
-                               "className" : className}	
-             self.app.logger.info(classification)
-
-    return classification
-
+        classificationList = nlc.list()
+        if "classifiers" in classificationList:
+            if "classifier_id" in classificationList["classifiers"][0]:
+                classID = classificationList["classifiers"][0]['classifier_id']
+                status = nlc.status(classID)
+                if status.get("status") == "Available":
+                    classes = nlc.classify(classID, txt)
+                    if "classes" in classes:
+                        className = classes["classes"][0]["class_name"]
+                        confidence = classes["classes"][0]["confidence"]
+                        classification = {"confidence": confidence,
+                                          "className": className}
+                        self.app.logger.info(classification)
+        return classification
