@@ -24,18 +24,118 @@ from wtforms.validators import Required
 from watson_developer_cloud import LanguageTranslationV2 as LanguageTranslation
 from watson_developer_cloud import WatsonException
 
-# Initialise the application and the secret key needed for CSRF protected form submission.
-# You should change the secret key to something that is secret and complex.
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'please subtitute this string with something hard to guess'
 
-# The form containing the text to be processed that the application web page will be submitted/
+# Initialise the application and the secret key needed for CSRF
+# protected form submission.
+# You should change the secret key to something that is secret and complex.
+
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = \
+    'please subtitute this string with something hard to guess'
+
+
+global username
+global password
+with open('credentials.json') as f:
+    data = json.load(f)
+    credentials = data['language_translator'][0]['credentials']
+    username = str(credentials['username'])
+    password = str(credentials['password'])
+
+
+# The form containing the text to be processed that the
+# application web page will be submitted/
+
+
 class LangForm(Form):
     txtdata = TextAreaField('Text to process', validators=[Required()])
     submit = SubmitField('Process')
 
-# As this is the only route defined in this application, so far, it is the only page that 
-# the application will respond to.
+
+def getTranslationService():
+    '''
+    Args:
+        None
+    Returns:
+        LanguageTranslation (class): this is just a wrapper for the
+        service credentials
+    '''
+    return LanguageTranslation(username=username, password=password)
+
+
+def identifyLanguage(data):
+    '''
+    Args:
+        data (str): this is the string representing the words in the language
+        being identified and translated
+    Returns:
+        retData (dict): this is the dict which has the data for the first
+        language identified by watson
+    '''
+    txt = data.encode('utf-8', 'replace')
+    language_translation = getTranslationService()
+
+    langsdetected = language_translation.identify(txt)
+    app.logger.info(json.dumps(langsdetected, indent=2))
+    app.logger.info(langsdetected['languages'][0]['language'])
+    app.logger.info(langsdetected['languages'][0]['confidence'])
+
+    primarylang = langsdetected['languages'][0]['language']
+    confidence = langsdetected['languages'][0]['confidence']
+
+    retData = {'language': primarylang,
+               'confidence': confidence}
+
+    return retData
+
+
+def checkForTranslation(fromlang, tolang):
+    '''
+    Args:
+        fromlang (str): this is the language that has been detected by the
+        translation service
+        tolang (str): this is the language for which the ability to translate
+        is being checked
+    Returns:
+        supportedModels (list): this list contains the languages that the
+        detected language can be translated into
+    '''
+    msg = "Checking if possible to translate from {} to en".format(fromlang)
+    app.logger.info(msg)
+    supportedModels = []
+
+    lt = getTranslationService()
+    models = lt.get_models()
+    app.logger.info(json.dumps(models, indent=2))
+    if models and models['models']:
+        modelList = models['models']
+        for model in modelList:
+            if fromlang == model['source'] and tolang == model['target']:
+                supportedModels.append(model['model_id'])
+
+    app.logger.info(supportedModels)
+    return supportedModels
+
+
+def performTranslation(txt, primarylang, targetlang):
+    '''
+    Args:
+        txt (str): this is the string that is going to be translated
+        primarylang (str): this is the language that was detected
+        from the string
+        targetlang (str): this is the language that txt is going to be
+        translated into
+    Returns:
+        translation (str): this is the translated version of txt
+    '''
+    lt = getTranslationService()
+    translation = lt.translate(txt, source=primarylang, target=targetlang)
+    return translation
+
+
+# As this is the only route defined in this application, so far,
+# it is the only page that the application will respond to.
 @app.route('/wl/lang', methods=['GET', 'POST'])
 def wlhome():
     # This is how you do logging, in this case information messages.
@@ -44,33 +144,39 @@ def wlhome():
     lang = "TBD"
     txt = None
     form = LangForm()
-    # If the form passes this check, then its a POST and the fields are valid. ie. if the 
-    # request is a GET then this check fails.	
+    # If the form passes this check, then its a POST and
+    # the fields are valid. ie. if the
+    # request is a GET then this check fails.
     if form.validate_on_submit():
         lang = "TBC"
         txt = form.txtdata.data
         form.txtdata.data = ''
 
         try:
-            language_translation = LanguageTranslation(username='<your username key for the Watson language translation service>',
-                                                   password='<your password key for the service>')
+            language_translation = \
+                LanguageTranslation(username=username,
+                                    password=password)
             langsdetected = language_translation.identify(txt)
             primarylang = langsdetected["languages"][0]['language']
             confidence = langsdetected["languages"][0]['confidence']
 
-            lang = "I am %s confident that the language is %s" % (confidence, primarylang)            
+            lang = "I am {} confident that the language is {}"
+            lang = lang.format(confidence, primarylang)
             session['langtext'] = lang
 
             allinfo['lang'] = lang
             allinfo['form'] = form
             return redirect(url_for('wlhome'))
         except WatsonException as err:
-          allinfo['error'] = err
+            allinfo['error'] = err
 
     allinfo['lang'] = session.get('langtext')
     allinfo['form'] = form
     return render_template('watson/wlindex.html', info=allinfo)
 
+
 port = os.getenv('PORT', '5000')
+
+
 if __name__ == "__main__":
-	app.run(host='0.0.0.0', port=int(port), debug=True)
+    app.run(host='0.0.0.0', port=int(port), debug=True)
