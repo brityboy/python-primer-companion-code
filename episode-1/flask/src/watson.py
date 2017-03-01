@@ -63,7 +63,6 @@ def wlhome():
         lang = 'TBC'
         txt = form.txtdata.data
         form.txtdata.data = ''
-
         try:
             language_translation = \
                 LanguageTranslation(username=username,
