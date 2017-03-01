@@ -21,7 +21,7 @@ from flask.ext.wtf import Form
 from wtforms import TextAreaField, SubmitField
 from wtforms.validators import Required
 
-from watson_developer_cloud import LanguageTranslatorV2 as LanguageTranslation
+# from watson_developer_cloud import LanguageTranslatorV2 as LanguageTranslation
 from watson_developer_cloud import WatsonException
 
 from languagetranslation import LanguageTranslationUtils
@@ -51,6 +51,7 @@ def wlhome():
         lang = "TBC"
         txt = form.txtdata.data
         form.txtdata.data = ''
+        classification = {}
 
         try:
             ltu = LanguageTranslationUtils(app)
