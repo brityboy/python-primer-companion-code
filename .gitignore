@@ -63,3 +63,4 @@ target/
 
 #Credentials
 *.json
+*.csv
