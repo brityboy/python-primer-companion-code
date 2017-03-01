@@ -22,7 +22,6 @@ from flask.ext.wtf import Form
 from wtforms import TextAreaField, SubmitField
 from wtforms.validators import Required
 
-from watson_developer_cloud import LanguageTranslationV2 as LanguageTranslation
 from watson_developer_cloud import WatsonException
 
 from languagetranslation import LanguageTranslationUtils
@@ -30,18 +29,21 @@ from naturallanguageclassification import NaturalLanguageClassifierUtils
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'please subtittute this string with something hard to guess'
+app.config['SECRET_KEY'] = \
+    'please subtitute this string with something hard to guess'
+
 
 class LangForm(Form):
     txtdata = TextAreaField('Text to process', validators=[Required()])
     submit = SubmitField('Process')
+
 
 @app.route('/wl/lang', methods=['GET', 'POST'])
 def wlhome():
     app.logger.info('wlhome page requested')
     allinfo = {}
     outputTxt = "TBD"
-    targetlang = 'en'    
+    targetlang = 'en'
     lang = "TBD"
     txt = None
     form = LangForm()
@@ -52,26 +54,31 @@ def wlhome():
 
         try:
             ltu = LanguageTranslationUtils(app)
-            nlcu = NaturalLanguageClassifierUtils(app)            
+            nlcu = NaturalLanguageClassifierUtils(app)
             lang = ltu.identifyLanguage(txt)
             primarylang = lang["language"]
             confidence = lang["confidence"]
 
-            outputTxt = "I am %s confident that the language is %s" % (confidence, primarylang)
+            outputTxt = "I am {} confident that the language is {}"
+            outputTxt = outputTxt.format(confidence, primarylang)
             if targetlang != primarylang:
-                supportedModels = ltu.checkForTranslation(primarylang, targetlang)
+                supportedModels = ltu.checkForTranslation(primarylang,
+                                                          targetlang)
                 if supportedModels:
-                    englishTxt = ltu.performTranslation(txt, primarylang, targetlang)
+                    englishTxt = ltu.performTranslation(txt, primarylang,
+                                                        targetlang)
                     outputTxt += ", which in english is %s" % englishTxt
                     classification = nlcu.classifyTheText(englishTxt)
                 else:
-                    outputTxt += ", which unfortunately we can't translate into English"
+                    outputTxt += \
+                        ", which unfortunately we can't translate into English"
             else:
                 classification = nlcu.classifyTheText(txt)
             if classification:
-                outputTxt += "(and %s confident that it is %s classification)" \
-                                              % (classification['confidence'],
-                                                 classification['className'])
+                message = "(and {} confident that it is {} classification)"
+                message = message.format(classification['confidence'],
+                                         classification['className'])
+                outputTxt += message
 
             session['langtext'] = outputTxt
 
@@ -79,7 +86,7 @@ def wlhome():
             allinfo['form'] = form
             return redirect(url_for('wlhome'))
         except WatsonException as err:
-          allinfo['error'] = err
+            allinfo['error'] = err
 
     allinfo['lang'] = session.get('langtext')
     allinfo['form'] = form
@@ -90,24 +97,28 @@ def wlhome():
 def apiprocess():
     app.logger.info('REST API for process has been invoked')
     targetlang = 'en'
-    classification = {"className":"unknown"}
+    classification = {"className": "unknown"}
     results = {}
-    theData = {"error":"If you see this message then something has gone badly wrong"} 
-  
+    theData = \
+        {"error": "If you see this message something has gone badly wrong"}
+
     app.logger.info(request.form['txtdata'])
-    if not 'txtdata' in request.form:
-        theData = {"error":"Text to be processed must not be blank"} 
-    else:   
+    if 'txtdata' not in request.form:
+        theData = {"error": "Text to be processed must not be blank"}
+    else:
         del theData["error"]
         try:
             data = request.form['txtdata']
-            ltu = LanguageTranslationUtils(app) 
-            nlcu = NaturalLanguageClassifierUtils(app)     
-            primarylang = theData['language'] = ltu.identifyLanguage(data)["language"]
+            ltu = LanguageTranslationUtils(app)
+            nlcu = NaturalLanguageClassifierUtils(app)
+            primarylang = \
+                theData['language'] = ltu.identifyLanguage(data)["language"]
             if targetlang != primarylang:
-                supportedModels = ltu.checkForTranslation(primarylang, targetlang)
+                supportedModels = \
+                    ltu.checkForTranslation(primarylang, targetlang)
                 if supportedModels:
-                    englishTxt = ltu.performTranslation(data, primarylang, targetlang)
+                    englishTxt = \
+                        ltu.performTranslation(data, primarylang, targetlang)
                     classification = nlcu.classifyTheText(englishTxt)
             else:
                 classification = nlcu.classifyTheText(data)
@@ -115,13 +126,15 @@ def apiprocess():
             theData['classification'] = classification['className']
 
         except WatsonException as err:
-            theData['error'] = err;
+            # theData['error'] = err;
+            theData['error'] = err
 
-    results["results"] = theData    
+    results["results"] = theData
     return jsonify(results), 201
 
 
 port = os.getenv('PORT', '5000')
-if __name__ == "__main__":
-	app.run(host='0.0.0.0', port=int(port), debug=True)
 
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=int(port), debug=True)
