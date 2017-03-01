@@ -21,7 +21,7 @@ from watson_developer_cloud import WatsonException
 
 global username
 global password
-with open('credentials.json') as f:
+with open('trans_credentials.json') as f:
     data = json.load(f)
     credentials = data['language_translator'][0]['credentials']
     username = str(credentials['username'])
