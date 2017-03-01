@@ -13,13 +13,14 @@
 # limitations under the License.
 
 import os
+import json
 
 from flask import Flask, render_template, redirect, session, url_for
 from flask.ext.wtf import Form
 from wtforms import TextAreaField, SubmitField
 from wtforms.validators import Required
 
-from watson_developer_cloud import LanguageTranslationV2 as LanguageTranslation
+from watson_developer_cloud import LanguageTranslatorV2 as LanguageTranslation
 from watson_developer_cloud import WatsonException
 
 # Initialise the application and the secret key needed for CSRF protected form
@@ -29,9 +30,18 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = \
     'please subtitute this string with something hard to guess'
 
+global username
+global password
+with open('credentials.json') as f:
+    data = json.load(f)
+    credentials = data['language_translator'][0]['credentials']
+    username = str(credentials['username'])
+    password = str(credentials['password'])
 
 # The form containing the text to be processed that the application web page
 # will be submitted
+
+
 class LangForm(Form):
     txtdata = TextAreaField('Text to process', validators=[Required()])
     submit = SubmitField('Process')
@@ -56,8 +66,8 @@ def wlhome():
 
         try:
             language_translation = \
-                LanguageTranslation(username='<username>',
-                                    password='<password>')
+                LanguageTranslation(username=username,
+                                    password=password)
             langsdetected = language_translation.identify(txt)
             primarylang = langsdetected["languages"][0]
 
