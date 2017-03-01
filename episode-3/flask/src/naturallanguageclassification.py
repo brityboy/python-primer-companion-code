@@ -38,13 +38,20 @@ class NaturalLanguageClassifierUtils(object):
     def getNLCService(self):
         '''
         Args:
-
+            None
         Returns:
-
+            NaturalLanguageClassifierUtils as a class
         '''
         return self.service
 
     def classifyTheText(self, txt):
+        '''
+        Args:
+            txt (str): this is the string that is going to be classified
+        Returns:
+            classification (dict): this is a dict representing the classifier
+            output
+        '''
         self.app.logger.info("About to run the classification")
         nlc = self.getNLCService()
         classification = {}
