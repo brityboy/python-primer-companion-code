@@ -19,13 +19,10 @@ from watson_developer_cloud import WatsonException
 from watson_developer_cloud import NaturalLanguageClassifierV1 as NaturalLanguageClassifier
 
 
-global username
-global password
 with open('class_credentials.json') as f:
     data = json.load(f)
-    credentials = data['language_translator'][0]['credentials']
-    username = str(credentials['username'])
-    password = str(credentials['password'])
+    username = str(data['username'])
+    password = str(data['password'])
 
 
 class NaturalLanguageClassifierUtils(object):
